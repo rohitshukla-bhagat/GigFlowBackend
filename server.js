@@ -12,6 +12,8 @@ connectDB();
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,8 +21,11 @@ app.use(cookieParser());
 
 // CORS configuration (Adjust origin as needed)
 app.use(cors({
-    origin: process.env.FRONTEND_URL, // Vite default port
-    credentials: true,
+  origin: [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
+  ],
+  credentials: true,
 }));
 
 // Routes
