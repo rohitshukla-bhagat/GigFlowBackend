@@ -8,7 +8,7 @@ const fixIndexes = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('Connected to MongoDB');
 
-        const collection = mongoose.connection.collection('users');
+        const collection = mongoose.connection.collection('gigusers');
 
         // List indexes to confirm
         const indexes = await collection.indexes();

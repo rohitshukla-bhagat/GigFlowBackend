@@ -2,9 +2,6 @@ const Bid = require('../models/Bid');
 const Gig = require('../models/Gig');
 const mongoose = require('mongoose');
 
-// @desc    Place a bid
-// @route   POST /api/bids
-// @access  Private (Freelancer)
 const placeBid = async (req, res) => {
     const { gigId, message, price } = req.body;
 
@@ -21,10 +18,6 @@ const placeBid = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
-// @desc    Get bids for a gig
-// @route   GET /api/bids/:gigId
-// @access  Private (Owner only)
 const getBidsForGig = async (req, res) => {
     try {
         const bids = await Bid.find({ gigId: req.params.gigId }).populate(
@@ -36,10 +29,6 @@ const getBidsForGig = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-
-// @desc    Hire a freelancer (Atomic Logic)
-// @route   PATCH /api/bids/:bidId/hire
-// @access  Private (Owner only)
 const hireFreelancer = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
