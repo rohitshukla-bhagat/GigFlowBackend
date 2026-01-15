@@ -1,4 +1,6 @@
 const Gig = require('../models/Gig');
+const Bid = require('../models/Bid');
+const mongoose = require('mongoose');
 
 // @desc    Get all open gigs
 // @route   GET /api/gigs
@@ -80,6 +82,73 @@ const getMyStats = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// @desc    Update a gig
+// @route   PUT /api/gigs/:id
+// @access  Private
+const updateGig = async (req, res) => {
+    try {
+        const gig = await Gig.findById(req.params.id);
+
+        if (!gig) {
+            return res.status(404).json({ message: 'Gig not found' });
+        }
+
+        // Check for user ownership
+        if (gig.ownerId.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'User not authorized' });
+        }
+
+        const updatedGig = await Gig.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true }
+        );
+
+        res.status(200).json(updatedGig);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Delete a gig
+// @route   DELETE /api/gigs/:id
+// @access  Private
+const deleteGig = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const gig = await Gig.findById(req.params.id).session(session);
+
+        if (!gig) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: 'Gig not found' });
+        }
+
+        // Check for user ownership
+        if (gig.ownerId.toString() !== req.user._id.toString()) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(401).json({ message: 'User not authorized' });
+        }
+
+        // Delete all bids associated with this gig
+        await Bid.deleteMany({ gigId: gig._id }).session(session);
+
+        // Delete the gig
+        await Gig.deleteOne({ _id: gig._id }).session(session);
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.status(200).json({ id: req.params.id, message: 'Gig deleted successfully' });
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        res.status(500).json({ message: error.message });
+    }
+};
 
 module.exports = {
     getAllGigs,
@@ -87,4 +156,6 @@ module.exports = {
     getGigById,
     getMyGigs,
     getMyStats,
+    updateGig,
+    deleteGig,
 };
